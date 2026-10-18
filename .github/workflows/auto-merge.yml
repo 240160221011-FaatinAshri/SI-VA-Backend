@@ -52,6 +52,29 @@ jobs:
           if [ "$TOTAL_FILES" -eq 0 ]; then
             fail "PR tidak membawa perubahan file"
           fi
+
+          # Deteksi node_modules (file ter-commit)
+          NM_FILES=$(grep -c '/node_modules/' <<<"$FILES_TSV" || true)
+          NM_MSG=""
+          if [ "$NM_FILES" -gt 0 ]; then
+            NM_ROOTS=$(awk -F'\t' 'NR>0 && $0 ~ "/node_modules/" {print $2}' <<<"$FILES_TSV" \
+              | sed -E 's#(.*/node_modules)(/.*)?$#\1#' | sort -u | head -n5)
+            fail "node_modules ter-commit ($NM_FILES file). Jangan commit node_modules."
+            NM_MSG="
+          
+          📦 **node_modules ter-commit ($NM_FILES file)** — hapus dari git (tetap ada di lokal), lalu push:
+          
+          \`\`\`bash
+          $(while read -r r; do [ -n "$r" ] && echo "git rm -r --cached \"$r\""; done <<<"$NM_ROOTS")
+          echo 'node_modules/' >> .gitignore
+          git add .gitignore
+          git commit -m 'hapus node_modules dari repo'
+          git push
+          \`\`\`
+          
+          > \`.gitignore\` cuma mencegah file baru; file yang sudah di-track tetap perlu \`git rm --cached\` di atas."
+          fi
+
           if [ "$TOTAL_FILES" -gt 200 ]; then
             fail "PR terlalu besar ($TOTAL_FILES file, batas 200)"
           fi
@@ -97,7 +120,7 @@ jobs:
 
           if [ -n "$FAIL_MSG" ]; then
             gh pr comment "$PR_NUMBER" --repo "$REPO" \
-              --body "❌ Auto-merge ditolak, perlu review manual:$FAIL_MSG" >/dev/null
+              --body "❌ Auto-merge ditolak, perlu review manual:$FAIL_MSG$NM_MSG" >/dev/null
             echo "Safety check GAGAL:$FAIL_MSG"
             exit 1
           fi

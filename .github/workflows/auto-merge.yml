@@ -58,7 +58,7 @@ jobs:
           NM_MSG=""
           if [ "$NM_FILES" -gt 0 ]; then
             NM_ROOTS=$(awk -F'\t' 'NR>0 && $0 ~ "/node_modules/" {print $2}' <<<"$FILES_TSV" \
-              | sed -E 's#(.*/node_modules)(/.*)?$#\1#' | sort -u | head -n5)
+              | sed -E 's#/node_modules(/.*)$#/node_modules#' | sort -u | head -n5)
             fail "node_modules ter-commit ($NM_FILES file). Jangan commit node_modules."
             NM_MSG="
           

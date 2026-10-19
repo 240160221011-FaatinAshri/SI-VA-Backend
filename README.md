@@ -15,12 +15,21 @@
       <sub>Dosen</sub>
     </td>
     <td align="center">
+      <a href="https://github.com/240160221028-hash">
+        <img src="https://avatars.githubusercontent.com/u/267646103?v=4&s=200" width="100px;" alt="240160221028-hash"/><br>
+        <sub><b>Muhammad Zaky</b></sub>
+      </a><br>
+      <sub>240160221028</sub>
+    </td>
+    <td align="center">
       <a href="https://github.com/240160221044-cpu">
         <img src="https://avatars.githubusercontent.com/u/267661710?v=4&s=200" width="100px;" alt="240160221044-cpu"/><br>
         <sub><b>Sandika Yusuf Permana</b></sub>
       </a><br>
       <sub>240160221044</sub>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://github.com/fauzanzainularifin">
         <img src="https://avatars.githubusercontent.com/u/275631557?v=4&s=200" width="100px;" alt="fauzanzainularifin"/><br>
@@ -28,8 +37,6 @@
       </a><br>
       <sub>240160221014</sub>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://github.com/240160221008-lab">
         <img src="https://avatars.githubusercontent.com/u/267871149?v=4&s=200" width="100px;" alt="240160221008-lab"/><br>
@@ -44,21 +51,14 @@
       </a><br>
       <sub>240160221013</sub>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://github.com/240160221022-byte">
         <img src="https://avatars.githubusercontent.com/u/273494802?v=4&s=200" width="100px;" alt="240160221022-byte"/><br>
         <sub><b>Marsya5</b></sub>
       </a><br>
       <sub>240160221022</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/240160221028-hash">
-        <img src="https://avatars.githubusercontent.com/u/267646103?v=4&s=200" width="100px;" alt="240160221028-hash"/><br>
-        <sub><b>Muhammad Zaky</b></sub>
-      </a><br>
-      <sub>240160221028</sub>
     </td>
     <td align="center">
       <a href="https://github.com/YosepAipura48">

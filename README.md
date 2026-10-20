@@ -15,18 +15,18 @@
       <sub>Dosen</sub>
     </td>
     <td align="center">
-      <a href="https://github.com/240160221028-hash">
-        <img src="https://avatars.githubusercontent.com/u/267646103?v=4&s=200" width="100px;" alt="240160221028-hash"/><br>
-        <sub><b>Muhammad Zaky</b></sub>
-      </a><br>
-      <sub>240160221028</sub>
-    </td>
-    <td align="center">
       <a href="https://github.com/240160221044-cpu">
         <img src="https://avatars.githubusercontent.com/u/267661710?v=4&s=200" width="100px;" alt="240160221044-cpu"/><br>
         <sub><b>Sandika Yusuf Permana</b></sub>
       </a><br>
       <sub>240160221044</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/240160221028-hash">
+        <img src="https://avatars.githubusercontent.com/u/267646103?v=4&s=200" width="100px;" alt="240160221028-hash"/><br>
+        <sub><b>Muhammad Zaky</b></sub>
+      </a><br>
+      <sub>240160221028</sub>
     </td>
   </tr>
   <tr>
@@ -54,18 +54,18 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://github.com/240160221022-byte">
-        <img src="https://avatars.githubusercontent.com/u/273494802?v=4&s=200" width="100px;" alt="240160221022-byte"/><br>
-        <sub><b>Marsya5</b></sub>
-      </a><br>
-      <sub>240160221022</sub>
-    </td>
-    <td align="center">
       <a href="https://github.com/YosepAipura48">
         <img src="https://avatars.githubusercontent.com/u/273491522?v=4&s=200" width="100px;" alt="YosepAipura48"/><br>
         <sub><b>yosep adipura h - 240160221048</b></sub>
       </a><br>
       <sub>240160221048</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/240160221022-byte">
+        <img src="https://avatars.githubusercontent.com/u/273494802?v=4&s=200" width="100px;" alt="240160221022-byte"/><br>
+        <sub><b>Marsya5</b></sub>
+      </a><br>
+      <sub>240160221022</sub>
     </td>
     <td align="center">
       <a href="https://github.com/240160221026-commit">
@@ -118,7 +118,7 @@
         <img src="https://avatars.githubusercontent.com/u/1296378?v=4&s=200" width="100px;" alt="deLLa"/><br>
         <sub><b>deLLa</b></sub>
       </a><br>
-      <sub>240160221044</sub>
+      <sub>240160221048</sub>
     </td>
   </tr>
   <tr>

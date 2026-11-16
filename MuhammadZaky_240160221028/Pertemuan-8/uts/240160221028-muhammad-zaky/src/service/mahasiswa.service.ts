@@ -1,42 +1,34 @@
 import { prisma } from "../config/client.ts";
 
-/**
- * Custom Error untuk entitas yang tidak ditemukan (HTTP 404).
- */
+// Error ketika data mahasiswa tidak ditemukan
 export class NotFoundError extends Error {
-  readonly statusCode: number = 404;
-  readonly code: string = "NOT_FOUND";
+  readonly statusCode = 404;
+  readonly code = "NOT_FOUND";
 
-  constructor(message: string = "Mahasiswa tidak ditemukan") {
+  constructor(message = "Data mahasiswa tidak ditemukan") {
     super(message);
     this.name = "NotFoundError";
   }
 }
 
-/**
- * Custom Error untuk konflik data unik / duplikasi (HTTP 409).
- */
+// Error ketika terjadi duplikasi data
 export class ConflictError extends Error {
-  readonly statusCode: number = 409;
-  readonly code: string = "CONFLICT";
+  readonly statusCode = 409;
+  readonly code = "CONFLICT";
 
-  constructor(message: string = "NIM sudah terdaftar") {
+  constructor(message = "NIM sudah digunakan") {
     super(message);
     this.name = "ConflictError";
   }
 }
 
-/**
- * Filter opsi pencarian daftar mahasiswa.
- */
+// Tipe data untuk pencarian mahasiswa
 export interface MahasiswaFilter {
   prodi?: string;
   angkatan?: number;
 }
 
-/**
- * Data Transfer Object untuk penambahan mahasiswa baru.
- */
+// Tipe data untuk menambahkan mahasiswa
 export interface CreateMahasiswaDTO {
   nim: string;
   nama: string;
@@ -44,55 +36,63 @@ export interface CreateMahasiswaDTO {
   angkatan: number;
 }
 
-/**
- * Data Transfer Object untuk pembaruan data mahasiswa.
- */
+// Tipe data untuk mengubah data mahasiswa
 export interface UpdateMahasiswaDTO {
   nama?: string;
   prodi?: string;
   angkatan?: number;
 }
 
-/**
- * Mengambil semua data mahasiswa dengan opsi filter prodi dan angkatan.
- */
-export const findAll = async (filters?: MahasiswaFilter) => {
-  const where: { prodi?: string; angkatan?: number } = {};
+// Mengambil daftar mahasiswa berdasarkan filter
+export const findAll = async (filters: MahasiswaFilter = {}) => {
+  const { prodi, angkatan } = filters;
 
-  if (filters?.prodi !== undefined && filters.prodi.trim() !== "") {
-    where.prodi = filters.prodi.trim();
-  }
-
-  if (filters?.angkatan !== undefined) {
-    where.angkatan = filters.angkatan;
-  }
-
-  return await prisma.mahasiswa.findMany({
-    where,
-    orderBy: { nim: "asc" },
+  return prisma.mahasiswa.findMany({
+    where: {
+      ...(prodi?.trim() ? { prodi: prodi.trim() } : {}),
+      ...(angkatan !== undefined ? { angkatan } : {}),
+    },
+    orderBy: {
+      nim: "asc",
+    },
   });
 };
 
-/**
- * Mengambil satu mahasiswa berdasarkan NIM.
- * Melempar NotFoundError jika data tidak ditemukan.
- */
+// Mencari mahasiswa menggunakan NIM
 export const findByNim = async (nim: string) => {
-  const mahasiswa = await prisma.mahasiswa.findUnique({
+  const result = await prisma.mahasiswa.findUnique({
     where: { nim },
   });
 
-  if (!mahasiswa) {
-    throw new NotFoundError(`Mahasiswa dengan NIM '${nim}' tidak ditemukan`);
+  if (result === null) {
+    throw new NotFoundError(
+      `Mahasiswa dengan NIM '${nim}' tidak ditemukan`
+    );
   }
 
-  return mahasiswa;
+  return result;
 };
 
-/**
- * Menambahkan data mahasiswa baru ke database.
- * Melempar ConflictError jika terjadi pelanggaran unique constraint pada NIM (P2002).
- */
+// Memeriksa kode error dari Prisma
+const handlePrismaError = (error: unknown, nim: string): never => {
+  if (typeof error === "object" && error !== null && "code" in error) {
+    const code = error.code;
+
+    if (code === "P2002") {
+      throw new ConflictError(`NIM '${nim}' sudah terdaftar`);
+    }
+
+    if (code === "P2025") {
+      throw new NotFoundError(
+        `Mahasiswa dengan NIM '${nim}' tidak ditemukan`
+      );
+    }
+  }
+
+  throw error;
+};
+
+// Menambahkan mahasiswa baru
 export const create = async (data: CreateMahasiswaDTO) => {
   try {
     return await prisma.mahasiswa.create({
@@ -103,74 +103,56 @@ export const create = async (data: CreateMahasiswaDTO) => {
         angkatan: data.angkatan,
       },
     });
-  } catch (error: unknown) {
-    if (typeof error === "object" && error !== null && "code" in error && (error as { code: string }).code === "P2002") {
-      throw new ConflictError(`NIM '${data.nim}' sudah terdaftar`);
-    }
-    throw error;
+  } catch (error) {
+    handlePrismaError(error, data.nim);
   }
 };
 
-/**
- * Memperbarui data mahasiswa berdasarkan NIM.
- * Melempar NotFoundError jika NIM tidak ditemukan (P2025).
- * Melempar ConflictError jika terjadi konflik duplikasi (P2002).
- */
-export const update = async (nim: string, data: UpdateMahasiswaDTO) => {
-  const updateData: { nama?: string; prodi?: string; angkatan?: number } = {};
+// Memperbarui informasi mahasiswa
+export const update = async (
+  nim: string,
+  data: UpdateMahasiswaDTO
+) => {
+  const changes: UpdateMahasiswaDTO = {};
 
   if (data.nama !== undefined) {
-    updateData.nama = data.nama.trim();
+    changes.nama = data.nama.trim();
   }
+
   if (data.prodi !== undefined) {
-    updateData.prodi = data.prodi.trim();
+    changes.prodi = data.prodi.trim();
   }
+
   if (data.angkatan !== undefined) {
-    updateData.angkatan = data.angkatan;
+    changes.angkatan = data.angkatan;
   }
 
   try {
     return await prisma.mahasiswa.update({
       where: { nim },
-      data: updateData,
+      data: changes,
     });
-  } catch (error: unknown) {
-    if (typeof error === "object" && error !== null && "code" in error) {
-      const prismaError = error as { code: string };
-      if (prismaError.code === "P2025") {
-        throw new NotFoundError(`Mahasiswa dengan NIM '${nim}' tidak ditemukan`);
-      }
-      if (prismaError.code === "P2002") {
-        throw new ConflictError("NIM sudah terdaftar");
-      }
-    }
-    throw error;
+  } catch (error) {
+    handlePrismaError(error, nim);
   }
 };
 
-/**
- * Menghapus data mahasiswa berdasarkan NIM.
- * Melempar NotFoundError jika NIM tidak ditemukan (P2025).
- */
+// Menghapus mahasiswa dari database
 export const deleteMahasiswa = async (nim: string) => {
   try {
     return await prisma.mahasiswa.delete({
       where: { nim },
     });
-  } catch (error: unknown) {
-    if (typeof error === "object" && error !== null && "code" in error && (error as { code: string }).code === "P2025") {
-      throw new NotFoundError(`Mahasiswa dengan NIM '${nim}' tidak ditemukan`);
-    }
-    throw error;
+  } catch (error) {
+    handlePrismaError(error, nim);
   }
 };
 
+// Alias fungsi hapus
 export { deleteMahasiswa as delete };
 
-/**
- * Bundle service object untuk kemudahan import.
- */
-export const mahasiswaService = {
+// Kumpulan fungsi service mahasiswa
+const mahasiswaService = {
   findAll,
   findByNim,
   create,
@@ -178,5 +160,5 @@ export const mahasiswaService = {
   delete: deleteMahasiswa,
 };
 
+export { mahasiswaService };
 export default mahasiswaService;
-

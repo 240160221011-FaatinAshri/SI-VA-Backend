@@ -1,29 +1,37 @@
 import type { Request, Response, NextFunction } from "express";
 import { mahasiswaService } from "../service/mahasiswa.service.ts";
-import type { MahasiswaFilter, CreateMahasiswaDTO, UpdateMahasiswaDTO } from "../service/mahasiswa.service.ts";
+import type {
+  MahasiswaFilter,
+  CreateMahasiswaDTO,
+  UpdateMahasiswaDTO,
+} from "../service/mahasiswa.service.ts";
 
 /**
- * Controller untuk mengambil daftar seluruh mahasiswa dengan filter opsional.
- * GET /mahasiswa
+ * Mengambil seluruh informasi mahasiswa beserta filter pencarian.
  */
-export const getAll = async (req: Request, res: Response, next: NextFunction) => {
+export const getAll = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { prodi, angkatan } = req.query;
     const filters: MahasiswaFilter = {};
-    const currentYear = new Date().getFullYear();
+    const tahunSekarang = new Date().getFullYear();
 
-    // Validasi filter prodi jika disertakan
+    // Memeriksa parameter program studi
     if (prodi !== undefined) {
-      if (typeof prodi !== "string" || prodi.trim() === "") {
+      if (typeof prodi !== "string" || prodi.trim().length === 0) {
         return res.status(400).json({
           success: false,
           message: "Parameter query 'prodi' harus berupa teks yang tidak kosong",
         });
       }
+
       filters.prodi = prodi.trim();
     }
 
-    // Validasi filter angkatan jika disertakan
+    // Memeriksa format tahun angkatan
     if (angkatan !== undefined) {
       if (typeof angkatan !== "string" || !/^\d{4}$/.test(angkatan)) {
         return res.status(400).json({
@@ -32,61 +40,77 @@ export const getAll = async (req: Request, res: Response, next: NextFunction) =>
         });
       }
 
-      const tahun = Number(angkatan);
-      if (!Number.isInteger(tahun) || tahun < 2000 || tahun > currentYear) {
+      const tahunAngkatan = parseInt(angkatan, 10);
+
+      if (
+        !Number.isInteger(tahunAngkatan) ||
+        tahunAngkatan < 2000 ||
+        tahunAngkatan > tahunSekarang
+      ) {
         return res.status(400).json({
           success: false,
-          message: `Parameter query 'angkatan' harus berupa bilangan bulat antara 2000 dan ${currentYear}`,
+          message: `Parameter query 'angkatan' harus berupa bilangan bulat antara 2000 dan ${tahunSekarang}`,
         });
       }
-      filters.angkatan = tahun;
+
+      filters.angkatan = tahunAngkatan;
     }
 
-    const data = await mahasiswaService.findAll(filters);
+    const mahasiswa = await mahasiswaService.findAll(filters);
 
     return res.status(200).json({
       success: true,
-      total: data.length,
-      data,
+      total: mahasiswa.length,
+      data: mahasiswa,
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
 /**
- * Controller untuk mengambil detail mahasiswa berdasarkan NIM.
- * GET /mahasiswa/:nim
+ * Menampilkan data mahasiswa secara spesifik melalui NIM.
  */
-export const getByNim = async (req: Request, res: Response, next: NextFunction) => {
+export const getByNim = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const { nim } = req.params;
+    const nim = req.params.nim;
 
-    if (typeof nim !== "string" || nim.trim() === "") {
+    if (typeof nim !== "string" || nim.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: "Parameter NIM harus berupa teks yang tidak kosong",
       });
     }
 
-    const data = await mahasiswaService.findByNim(nim.trim());
+    const mahasiswa = await mahasiswaService.findByNim(nim.trim());
 
     return res.status(200).json({
       success: true,
-      data,
+      data: mahasiswa,
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
 /**
- * Controller untuk menambahkan data mahasiswa baru.
- * POST /mahasiswa
+ * Memproses penambahan data mahasiswa baru.
  */
-export const create = async (req: Request, res: Response, next: NextFunction) => {
+export const create = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    if (typeof req.body !== "object" || req.body === null || Array.isArray(req.body)) {
+    if (
+      typeof req.body !== "object" ||
+      req.body === null ||
+      Array.isArray(req.body)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Request body harus berupa objek JSON yang valid",
@@ -94,168 +118,190 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     const { nim, nama, prodi, angkatan } = req.body;
-    const currentYear = new Date().getFullYear();
+    const tahunSekarang = new Date().getFullYear();
 
-    // Validasi tipe dan nilai field nim
-    if (typeof nim !== "string" || nim.trim() === "") {
+    // Pemeriksaan data NIM
+    if (typeof nim !== "string" || nim.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: "Field 'nim' wajib diisi berupa teks dan tidak boleh kosong",
       });
     }
 
-    // Validasi tipe dan nilai field nama
-    if (typeof nama !== "string" || nama.trim() === "") {
+    // Pemeriksaan nama mahasiswa
+    if (typeof nama !== "string" || nama.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: "Field 'nama' wajib diisi berupa teks dan tidak boleh kosong",
       });
     }
 
-    // Validasi tipe dan nilai field prodi
-    if (typeof prodi !== "string" || prodi.trim() === "") {
+    // Pemeriksaan program studi
+    if (typeof prodi !== "string" || prodi.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: "Field 'prodi' wajib diisi berupa teks dan tidak boleh kosong",
       });
     }
 
-    // Validasi ketat angkatan: wajib number, integer, 2000..currentYear (tanpa konversi Number())
+    // Tahun angkatan harus berupa angka bulat dalam rentang yang ditentukan
     if (
       typeof angkatan !== "number" ||
       !Number.isInteger(angkatan) ||
       angkatan < 2000 ||
-      angkatan > currentYear
+      angkatan > tahunSekarang
     ) {
       return res.status(400).json({
         success: false,
-        message: `Field 'angkatan' wajib berupa angka bilangan bulat antara 2000 dan ${currentYear}`,
+        message: `Field 'angkatan' wajib berupa angka bilangan bulat antara 2000 dan ${tahunSekarang}`,
       });
     }
 
-    const createPayload: CreateMahasiswaDTO = {
+    const mahasiswaBaru: CreateMahasiswaDTO = {
       nim: nim.trim(),
       nama: nama.trim(),
       prodi: prodi.trim(),
-      angkatan,
+      angkatan: angkatan,
     };
 
-    const result = await mahasiswaService.create(createPayload);
+    const hasil = await mahasiswaService.create(mahasiswaBaru);
 
     return res.status(201).json({
       success: true,
       message: "Mahasiswa berhasil ditambahkan",
-      data: result,
+      data: hasil,
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
 /**
- * Controller untuk memperbarui sebagian data mahasiswa berdasarkan NIM.
- * PATCH /mahasiswa/:nim
+ * Memperbarui informasi mahasiswa berdasarkan nomor induk mahasiswa.
  */
-export const update = async (req: Request, res: Response, next: NextFunction) => {
+export const update = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const { nim } = req.params;
+    const nim = req.params.nim;
 
-    if (typeof nim !== "string" || nim.trim() === "") {
+    if (typeof nim !== "string" || nim.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: "Parameter NIM harus berupa teks yang tidak kosong",
       });
     }
 
-    if (typeof req.body !== "object" || req.body === null || Array.isArray(req.body)) {
+    if (
+      typeof req.body !== "object" ||
+      req.body === null ||
+      Array.isArray(req.body)
+    ) {
       return res.status(400).json({
         success: false,
         message: "Request body harus berupa objek JSON yang valid",
       });
     }
 
-    // Proteksi agar NIM tidak dapat diubah melalui endpoint PATCH
-    if (Object.prototype.hasOwnProperty.call(req.body, "nim")) {
+    // NIM hanya digunakan sebagai identitas dan tidak boleh diganti
+    if (Object.hasOwn(req.body, "nim")) {
       return res.status(400).json({
         success: false,
         message: "Field 'nim' tidak dapat diubah melalui endpoint PATCH",
       });
     }
 
-    const allowedFields = ["nama", "prodi", "angkatan"];
-    const providedFields = allowedFields.filter((field) =>
-      Object.prototype.hasOwnProperty.call(req.body, field)
+    const fields = ["nama", "prodi", "angkatan"];
+    const fieldTersedia = fields.filter((item) =>
+      Object.hasOwn(req.body, item)
     );
 
-    if (providedFields.length === 0) {
+    if (fieldTersedia.length === 0) {
       return res.status(400).json({
         success: false,
         message: "Isi minimal satu field yang ingin diperbarui (nama, prodi, atau angkatan)",
       });
     }
 
-    const updatePayload: UpdateMahasiswaDTO = {};
-    const currentYear = new Date().getFullYear();
+    const dataUpdate: UpdateMahasiswaDTO = {};
+    const tahunSekarang = new Date().getFullYear();
 
-    if (Object.prototype.hasOwnProperty.call(req.body, "nama")) {
-      const { nama } = req.body;
-      if (typeof nama !== "string" || nama.trim() === "") {
+    // Memeriksa perubahan nama
+    if (Object.hasOwn(req.body, "nama")) {
+      const nama = req.body.nama;
+
+      if (typeof nama !== "string" || nama.trim().length === 0) {
         return res.status(400).json({
           success: false,
           message: "Field 'nama' harus berupa teks dan tidak boleh kosong",
         });
       }
-      updatePayload.nama = nama.trim();
+
+      dataUpdate.nama = nama.trim();
     }
 
-    if (Object.prototype.hasOwnProperty.call(req.body, "prodi")) {
-      const { prodi } = req.body;
-      if (typeof prodi !== "string" || prodi.trim() === "") {
+    // Memeriksa perubahan program studi
+    if (Object.hasOwn(req.body, "prodi")) {
+      const prodi = req.body.prodi;
+
+      if (typeof prodi !== "string" || prodi.trim().length === 0) {
         return res.status(400).json({
           success: false,
           message: "Field 'prodi' harus berupa teks dan tidak boleh kosong",
         });
       }
-      updatePayload.prodi = prodi.trim();
+
+      dataUpdate.prodi = prodi.trim();
     }
 
-    if (Object.prototype.hasOwnProperty.call(req.body, "angkatan")) {
-      const { angkatan } = req.body;
+    // Memeriksa perubahan tahun angkatan
+    if (Object.hasOwn(req.body, "angkatan")) {
+      const angkatan = req.body.angkatan;
+
       if (
         typeof angkatan !== "number" ||
         !Number.isInteger(angkatan) ||
         angkatan < 2000 ||
-        angkatan > currentYear
+        angkatan > tahunSekarang
       ) {
         return res.status(400).json({
           success: false,
-          message: `Field 'angkatan' wajib berupa angka bilangan bulat antara 2000 dan ${currentYear}`,
+          message: `Field 'angkatan' wajib berupa angka bilangan bulat antara 2000 dan ${tahunSekarang}`,
         });
       }
-      updatePayload.angkatan = angkatan;
+
+      dataUpdate.angkatan = angkatan;
     }
 
-    const updated = await mahasiswaService.update(nim.trim(), updatePayload);
+    const hasilUpdate = await mahasiswaService.update(
+      nim.trim(),
+      dataUpdate
+    );
 
     return res.status(200).json({
       success: true,
       message: "Data mahasiswa berhasil diperbarui",
-      data: updated,
+      data: hasilUpdate,
     });
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
 /**
- * Controller untuk menghapus data mahasiswa berdasarkan NIM.
- * DELETE /mahasiswa/:nim
+ * Menghapus data mahasiswa yang dipilih berdasarkan NIM.
  */
-export const deleteMahasiswa = async (req: Request, res: Response, next: NextFunction) => {
+export const deleteMahasiswa = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const { nim } = req.params;
+    const nim = req.params.nim;
 
-    if (typeof nim !== "string" || nim.trim() === "") {
+    if (typeof nim !== "string" || nim.trim().length === 0) {
       return res.status(400).json({
         success: false,
         message: "Parameter NIM harus berupa teks yang tidak kosong",
@@ -264,15 +310,17 @@ export const deleteMahasiswa = async (req: Request, res: Response, next: NextFun
 
     await mahasiswaService.delete(nim.trim());
 
-    // HTTP 204 No Content: operasi berhasil tanpa response body
+    // Mengirim status 204 apabila penghapusan berhasil
     return res.status(204).send();
-  } catch (error) {
-    next(error);
+  } catch (err) {
+    next(err);
   }
 };
 
+// Menyediakan fungsi hapus dengan nama delete
 export { deleteMahasiswa as delete };
 
+// Kumpulan fungsi controller mahasiswa
 export const mahasiswaController = {
   getAll,
   getByNim,
@@ -282,4 +330,3 @@ export const mahasiswaController = {
 };
 
 export default mahasiswaController;
-

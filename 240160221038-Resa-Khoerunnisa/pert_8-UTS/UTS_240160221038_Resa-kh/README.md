@@ -4,9 +4,9 @@
 
 Mini project backend berupa REST API untuk mengelola data menu pada usaha **Baloh Kopi Adhikari**. API ini menggunakan Node.js, Express.js 5, Prisma ORM 7, dan SQLite sebagai database.
 
-Struktur project menggunakan pola **service/controller/routes** atau tiga lapisan untuk memisahkan pengelolaan endpoint, proses request, dan operasi database.
+Struktur project menggunakan pola **Service/Controller/Routes** atau tiga lapisan untuk memisahkan pengelolaan endpoint, proses request, dan operasi database.
 
-### Identitas Mahasiswa
+## Identitas Mahasiswa
 
 - **Nama:** Resa Khoerunnisa
 - **NIM:** 240160221038
@@ -19,24 +19,36 @@ Struktur project menggunakan pola **service/controller/routes** atau tiga lapisa
 
 ## Menyiapkan dan Menjalankan
 
+**1. Install dependencies**
+
 ```bash
 npm install
 ```
 
-Buat file `.env` berdasarkan konfigurasi berikut:
+**2. Buat file `.env`**
+
+Salin file `.env.example` menjadi `.env`, kemudian sesuaikan konfigurasi database dan port jika diperlukan.
+
+Contoh isi `.env.example`:
 
 ```env
 DATABASE_URL="file:./prisma/dev.db"
+PORT=3008
 ```
 
-Jalankan migrasi database dan generate Prisma Client:
+**3. Jalankan migrasi database**
 
 ```bash
-npx prisma migrate dev
-npx prisma generate
+npm run prisma:migrate
 ```
 
-Jalankan server:
+**4. Generate Prisma Client**
+
+```bash
+npm run prisma:generate
+```
+
+**5. Jalankan server**
 
 ```bash
 npm run dev
@@ -55,6 +67,7 @@ UTS_240160221038_Resa-kh/
 ├── client.ts
 ├── prisma.config.ts
 ├── package.json
+├── .env.example
 ├── prisma/
 │   ├── schema.prisma
 │   ├── migrations/
@@ -68,7 +81,8 @@ UTS_240160221038_Resa-kh/
         └── menu.service.ts
 ```
 
-Keterangan:
+**Keterangan:**
+
 - `app.ts`: Mengatur middleware, route, 404, dan error handler.
 - `server.ts`: Menjalankan aplikasi backend.
 - `client.ts`: Mengatur koneksi Prisma Client dengan database.
@@ -87,107 +101,127 @@ Semua endpoint menggunakan resource `/menu`.
 
 | Method | Endpoint | Deskripsi | Status Sukses |
 |---|---|---|---|
+| GET | `/health` | Memeriksa status server | 200 |
 | GET | `/menu` | Menampilkan seluruh menu | 200 |
 | GET | `/menu/:id` | Menampilkan detail menu | 200 |
 | POST | `/menu` | Menambahkan menu | 201 |
 | PATCH | `/menu/:id` | Mengubah data menu | 200 |
 | DELETE | `/menu/:id` | Menghapus menu | 204 |
-| GET | `/health` | Memeriksa status server | 200 |
 
-## Contoh Penggunaan API
+## Contoh Penggunaan API dengan cURL
 
-Pengujian API dilakukan menggunakan aplikasi Postman.
+Pengujian API dapat dilakukan menggunakan perintah cURL melalui terminal. Pastikan server sudah berjalan pada port 3008.
 
 ### 1. Health Check
 
-- Method: GET
-- URL: `http://localhost:3008/health`
+```bash
+curl -i http://localhost:3008/health
+```
 
 ### 2. Menampilkan Seluruh Menu
 
-- Method: GET
-- URL: `http://localhost:3008/menu`
+```bash
+curl -i http://localhost:3008/menu
+```
 
-### 3. Menambahkan Menu
+### 3. Menampilkan Detail Menu
 
-- Method: POST
-- URL: `http://localhost:3008/menu`
-- Body: raw → JSON
+```bash
+curl -i http://localhost:3008/menu/1
+```
 
-```json
-{
-  "nama": "Kopi Susu Gula Aren",
+### 4. Menambahkan Menu
+
+```bash
+curl -i -X POST http://localhost:3008/menu \
+-H "Content-Type: application/json" \
+-d '{
+  "nama": "Kopi Susu Aren",
   "kategori": "Kopi",
   "harga": 18000,
   "stok": 20,
   "tersedia": true
-}
+}'
 ```
-
-### 4. Menampilkan Detail Menu
-
-- Method: GET
-- URL: `http://localhost:3008/menu/1`
 
 ### 5. Mengubah Data Menu
 
-- Method: PATCH
-- URL: `http://localhost:3008/menu/1`
-- Body: raw → JSON
-
-```json
-{
+```bash
+curl -i -X PATCH http://localhost:3008/menu/1 \
+-H "Content-Type: application/json" \
+-d '{
   "harga": 20000,
-  "stok": 15
-}
+  "stok": 25
+}'
 ```
 
 ### 6. Menghapus Menu
 
-- Method: DELETE
-- URL: `http://localhost:3008/menu/1`
+```bash
+curl -i -X DELETE http://localhost:3008/menu/1
+```
 
-### 7. Menguji Validasi Data (400 Bad Request)
+## Pengujian Validasi dan Error
 
-Pengujian dilakukan dengan mengirimkan data menu yang tidak valid.
+### 1. Bad Request (400)
 
-- Method: POST
-- URL: `http://localhost:3008/menu`
-- Body: raw → JSON
+Pengujian dilakukan dengan mengirimkan data menu yang tidak valid, seperti nama kosong dan harga negatif.
+
+```bash
+curl -i -X POST http://localhost:3008/menu \
+-H "Content-Type: application/json" \
+-d '{
+  "nama": "",
+  "kategori": "Kopi",
+  "harga": -1000,
+  "stok": 20,
+  "tersedia": true
+}'
+```
+
+**Respons yang diharapkan:**
+
+Status HTTP `400 Bad Request`.
 
 ```json
 {
-  "nama": "Kopi Uji",
-  "kategori": "Kopi",
-  "harga": -5000,
-  "stok": 10,
-  "tersedia": true
+  "success": false,
+  "message": "Data menu tidak valid"
 }
 ```
 
-Hasil yang diharapkan: Status `400 Bad Request` karena harga tidak boleh bernilai negatif.
-
-### 8. Menguji Data Tidak Ditemukan (404 Not Found)
+### 2. Not Found (404)
 
 Pengujian dilakukan dengan mencari data menu menggunakan ID yang tidak tersedia.
 
-- Method: GET
-- URL: `http://localhost:3008/menu/999`
+```bash
+curl -i http://localhost:3008/menu/9999
+```
 
-Hasil yang diharapkan: Status `404 Not Found` karena data menu dengan ID tersebut tidak ditemukan.
+**Respons yang diharapkan:**
+
+Status HTTP `404 Not Found`.
+
+```json
+{
+  "success": false,
+  "message": "Menu tidak ditemukan"
+}
+```
 
 ## Validasi dan Kode Status HTTP
 
 API menerapkan validasi pada endpoint POST dan PATCH untuk memastikan data yang dikirim sesuai ketentuan.
 
-Ketentuan validasi:
+**Ketentuan validasi:**
+
 - Nama menu harus berupa teks dan tidak boleh kosong.
 - Kategori harus berupa teks dan tidak boleh kosong.
 - Harga harus berupa angka bulat lebih dari 0.
 - Stok harus berupa angka bulat minimal 0.
 - Status ketersediaan harus berupa boolean.
 
-Kode status HTTP yang digunakan:
+**Kode status HTTP yang digunakan:**
 
 | Status | Keterangan |
 |---|---|
@@ -198,11 +232,29 @@ Kode status HTTP yang digunakan:
 | 404 | Data tidak ditemukan |
 | 500 | Terjadi kesalahan pada server |
 
+## Bukti Pengujian API
+
+Bukti pengujian API disertakan dalam folder `bukti ss`.
+
+Bukti yang perlu disertakan:
+
+1. Hasil pengujian GET `/health`.
+2. Hasil pengujian GET `/menu`.
+3. Hasil pengujian GET `/menu/:id`.
+4. Hasil pengujian POST `/menu`.
+5. Hasil pengujian PATCH `/menu/:id`.
+6. Hasil pengujian DELETE `/menu/:id`.
+7. Hasil pengujian validasi 400 Bad Request.
+8. Hasil pengujian 404 Not Found.
+
+Screenshot menunjukkan proses pengujian dan respons yang diterima dari API.
+
 ## Skema Database
 
 Database menggunakan SQLite yang terintegrasi dengan Prisma ORM.
 
 Model `Menu` memiliki atribut:
+
 - `id`: ID menu sebagai primary key.
 - `nama`: Nama menu.
 - `kategori`: Kategori menu.
@@ -225,4 +277,4 @@ Proyek ini dapat dikembangkan dengan menambahkan beberapa fitur, seperti:
 
 ## Kesimpulan
 
-Mini project ini menghasilkan REST API untuk pengelolaan data menu Baloh Kopi Adhikari. Sistem telah menerapkan operasi CRUD, validasi input, pemisahan struktur tiga lapisan, serta penyimpanan data menggunakan SQLite melalui Prisma ORM.
+Mini project ini menghasilkan REST API untuk pengelolaan data menu Baloh Kopi Adhikari. Sistem menerapkan operasi CRUD, validasi input, pemisahan struktur tiga lapisan, serta penyimpanan data menggunakan SQLite melalui Prisma ORM.

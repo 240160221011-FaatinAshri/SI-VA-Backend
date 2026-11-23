@@ -68,7 +68,7 @@ Buat file `.env` pada direktori utama proyek:
 
 ```env
 DATABASE_URL="file:./prisma/dev.db"
-PORT=3009
+PORT=3008
 ```
 
 ### C. Generate Prisma Client
@@ -96,13 +96,13 @@ npm run dev
 Alamat utama API:
 
 ```text
-http://localhost:3009/
+http://localhost:3008/
 ```
 
 Pemeriksaan koneksi API dan database:
 
 ```text
-http://localhost:3009/api/health
+http://localhost:3008/api/health
 ```
 
 ## 5. Struktur dan Alur Kerja Sistem
@@ -204,14 +204,16 @@ Model Anggota dan Absensi memiliki relasi one-to-many. Artinya, satu anggota dap
 
 ## 8. Contoh Pengujian API
 
-Pengujian API dilakukan menggunakan Postman dengan format request body JSON.
+Pengujian API dapat dilakukan menggunakan Postman atau `curl`. Semua contoh di bawah
+memakai base URL `http://localhost:3008` (sesuai `PORT` pada `.env.example` dan
+`server.ts`). Format body adalah JSON.
 
 ### A. POST – Menambahkan Anggota
 
 **Endpoint:**
 
 ```text
-POST http://localhost:3009/anggota
+POST http://localhost:3008/anggota
 ```
 
 **Body (JSON):**
@@ -230,7 +232,7 @@ Respons yang diharapkan: `201 Created`.
 ### B. GET – Menampilkan Semua Anggota
 
 ```text
-GET http://localhost:3009/anggota
+GET http://localhost:3008/anggota
 ```
 
 Respons yang diharapkan: `200 OK`.
@@ -238,7 +240,7 @@ Respons yang diharapkan: `200 OK`.
 ### C. GET – Detail Anggota
 
 ```text
-GET http://localhost:3009/anggota/AGT001
+GET http://localhost:3008/anggota/AGT001
 ```
 
 Respons yang diharapkan: `200 OK`.
@@ -282,7 +284,7 @@ Respons yang diharapkan: `201 Created`.
 ### F. GET – Menampilkan Semua Absensi
 
 ```text
-GET http://localhost:3003/absensi
+GET http://localhost:3008/absensi
 ```
 
 Respons yang diharapkan: `200 OK`.
@@ -290,7 +292,7 @@ Respons yang diharapkan: `200 OK`.
 ### G. GET – Detail Absensi
 
 ```text
-GET http://localhost:3009/absensi/ABS003
+GET http://localhost:3008/absensi/ABS003
 ```
 
 Respons yang diharapkan: `200 OK`.
@@ -326,6 +328,98 @@ DELETE http://localhost:3008/anggota/AGT001
 ```
 
 Respons yang diharapkan: `204 No Content` jika anggota tidak memiliki data absensi yang masih terhubung.
+
+### K. Contoh Perintah `curl` (Seluruh Endpoint)
+
+Jalankan server terlebih dahulu (`npm run dev`), lalu gunakan perintah berikut di terminal lain.
+
+**Endpoint umum**
+
+```bash
+curl http://localhost:3008/
+curl http://localhost:3008/api/health
+```
+
+**Anggota — GET list & detail**
+
+```bash
+curl http://localhost:3008/anggota
+curl http://localhost:3008/anggota/AGT001
+```
+
+**Anggota — POST (201)**
+
+```bash
+curl -X POST http://localhost:3008/anggota \
+  -H "Content-Type: application/json" \
+  -d '{"id_anggota":"AGT001","nama":"Kim Taehyung","nim":"260160221012","jabatan":"Ketua"}'
+```
+
+**Anggota — PATCH (200)**
+
+```bash
+curl -X PATCH http://localhost:3008/anggota/AGT001 \
+  -H "Content-Type: application/json" \
+  -d '{"jabatan":"Wakil Ketua"}'
+```
+
+**Anggota — DELETE (204)**
+
+```bash
+curl -i -X DELETE http://localhost:3008/anggota/AGT001
+```
+
+**Absensi — GET list & detail**
+
+```bash
+curl http://localhost:3008/absensi
+curl http://localhost:3008/absensi/ABS001
+```
+
+**Absensi — POST (201)**
+
+```bash
+curl -X POST http://localhost:3008/absensi \
+  -H "Content-Type: application/json" \
+  -d '{"id_absensi":"ABS001","id_anggota":"AGT001","kegiatan":"Rapat Pembahasan LDKM","tanggal":"2026-11-04","status":"Hadir"}'
+```
+
+**Absensi — PATCH (200)**
+
+```bash
+curl -X PATCH http://localhost:3008/absensi/ABS001 \
+  -H "Content-Type: application/json" \
+  -d '{"status":"Izin"}'
+```
+
+**Absensi — DELETE (204)**
+
+```bash
+curl -i -X DELETE http://localhost:3008/absensi/ABS001
+```
+
+**Contoh 400 — field `status` tidak valid**
+
+```bash
+curl -i -X POST http://localhost:3008/absensi \
+  -H "Content-Type: application/json" \
+  -d '{"id_absensi":"ABS002","id_anggota":"AGT001","kegiatan":"Rapat","tanggal":"2026-11-04","status":"Hadir Sekali"}'
+```
+
+Respons: `400 Bad Request` dengan pesan
+`"Field 'status' wajib berupa Hadir, Izin, atau Sakit"`.
+
+![Bukti pengujian 400](ss/07-Post%20400.PNG)
+
+**Contoh 404 — data tidak ditemukan**
+
+```bash
+curl -i http://localhost:3008/anggota/AGT999
+```
+
+Respons: `404 Not Found`.
+
+![Bukti pengujian 404](ss/08-404.PNG)
 
 ## 9. Penanganan Kesalahan
 

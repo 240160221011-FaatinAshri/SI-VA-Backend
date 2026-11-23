@@ -187,7 +187,7 @@
         <img src="https://avatars.githubusercontent.com/u/1296378?v=4&s=200" width="100px;" alt="deLLa"/><br>
         <sub><b>deLLa</b></sub>
       </a><br>
-      <sub>240160221050</sub>
+      <sub>240160221047</sub>
     </td>
   </tr>
   <tr>
